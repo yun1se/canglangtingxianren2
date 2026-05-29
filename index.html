@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>沧浪群贤匹配测试</title>
+<style>
+/* ============================================
+   全局样式 - 沧浪亭标准色配色
+   主色：#b3e165  辅色：#85e1cc  点缀：#77c6e7
+   背景：深色 #0a0f1a  文字：白色 #ffffff
+   ============================================ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --primary: #b3e165;
+  --secondary: #85e1cc;
+  --accent: #77c6e7;
+  --bg: #f5f0e8;
+  --text: #3d2c2c;
+  --text-light: #8b7355;
+}
+html, body {
+  width: 100%; height: 100%;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  touch-action: pan-y;
+}
+
+/* ---------- 页面容器 ---------- */
+.page {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  transition: opacity 0.5s, transform 0.5s;
+  opacity: 0; pointer-events: none;
+  transform: translateX(30px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.page.active {
+  opacity: 1; pointer-events: auto;
+  transform: translateX(0);
+}
+
+/* ---------- 几何图案背景 ---------- */
+.page::before {
+  content: "";
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  opacity: 0.5; z-index: 0;
+  pointer-events: none;
+  background-image: url("bg-texture.png");
+  background-size: 400px 400px;
+  background-repeat: repeat;
+}
+
+/* ---------- 装饰边框 ---------- */
+.border-frame {
+  position: relative; z-index: 1;
+  width: 92%; max-width: 400px;
+  padding: 28px 22px;
+  border: 1.5px solid rgba(179,225,101,0.4);
+  border-radius: 12px;
+  background: rgba(245, 240, 232, 0.92);
+  box-shadow: 0 0 0 1px rgba(133,225,204,0.1), 0 8px 32px rgba(0,0,0,0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* ============================================
+   首页样式
+   ============================================ */
+.home-title {
+  font-size: 26px; font-weight: 700;
+  color: var(--text); text-align: left;
+  letter-spacing: 2px; margin-bottom: 16px;
+  line-height: 1.4;
+}
+.home-intro {
+  font-size: 13px; color: var(--text-light);
+  text-align: left; line-height: 1.9;
+  margin-bottom: 16px;
+  text-indent: 2em;
+}
+.home-intro p {
+  margin-bottom: 10px;
+  text-indent: 2em;
+}
+.home-start-text {
+  font-size: 15px; color: #3d2c2c;
+  text-align: left; margin: 20px 0;
+  font-weight: 600;
+  letter-spacing: 2px;
+}
+/* 分隔线 */
+.divider {
+  width: 60%; height: 1px; margin: 16px 0;
+  background: linear-gradient(to right, transparent, var(--primary), transparent);
+}
+/* 按钮 */
+.btn-start {
+  display: block; width: 100%; padding: 14px 0;
+  background: var(--primary);
+  color: #fff; font-size: 17px; font-weight: 700; letter-spacing: 4px;
+  border: none; border-radius: 8px; cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 20px rgba(179,225,101,0.25);
+}
+.btn-start:active {
+  transform: scale(0.97);
+  box-shadow: 0 2px 10px rgba(179,225,101,0.25);
+}
+/* 山水装饰图 */
+.mountain-art {
+  width: 100%; height: 130px; margin-bottom: 12px;
+  position: relative; overflow: visible;
+}
+.mountain-art svg { width: 100%; height: 100%; }
+
+/* ============================================
+   答题页样式
+   ============================================ */
+#page-quiz {
+  padding: 16px;
+}
+#page-quiz .border-frame {
+  height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+}
+.quiz-header {
+  width: 100%; display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 12px;
+  flex-shrink: 0;
+}
+.quiz-progress-text {
+  font-size: 13px; color: #8b7355;
+}
+.quiz-progress-bar {
+  width: 100%; height: 6px; background: rgba(0,0,0,0.08);
+  border-radius: 3px; margin-bottom: 16px; overflow: hidden;
+  flex-shrink: 0;
+}
+.quiz-progress-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(to right, var(--primary), var(--secondary));
+  transition: width 0.4s ease;
+}
+.quiz-question {
+  font-size: 16px; font-weight: 600;
+  color: #3d2c2c; line-height: 1.7;
+  margin-bottom: 16px; text-align: left;
+  flex-shrink: 0;
+}
+.quiz-options {
+  display: flex; flex-direction: column; gap: 10px;
+  flex: 1;
+}
+.quiz-option {
+  padding: 12px 14px;
+  border: 1.5px solid var(--primary);
+  border-radius: 8px; background: var(--primary);
+  font-size: 14px; color: #fff;
+  cursor: pointer; transition: all 0.25s;
+  text-align: left; line-height: 1.5;
+  position: relative; padding-left: 38px;
+}
+.quiz-option::before {
+  content: attr(data-label);
+  position: absolute; left: 12px; top: 50%;
+  transform: translateY(-50%);
+  width: 20px; height: 20px;
+  border: 1.5px solid #fff; border-radius: 50%;
+  font-size: 11px; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+}
+.quiz-option:active {
+  background: var(--secondary); border-color: var(--secondary);
+}
+.quiz-option.selected {
+  background: var(--secondary); border-color: var(--secondary);
+  color: #fff; font-weight: 600;
+}
+.quiz-option.selected::before {
+  background: #fff; color: var(--secondary);
+}
+
+/* ============================================
+   结果页样式
+   ============================================ */
+.result-header {
+  display: flex; align-items: flex-start;
+  gap: 14px; margin-bottom: 16px;
+}
+.result-image {
+  width: 50%; height: auto;
+  aspect-ratio: 3/4;
+  background: linear-gradient(135deg, rgba(179,225,101,0.1), rgba(133,225,204,0.15));
+  border-radius: 8px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.result-basic-info {
+  flex: 1;
+}
+.result-label {
+  font-size: 12px; color: var(--text-light);
+  margin-bottom: 4px;
+  text-align: center;
+}
+.result-name {
+  font-size: 28px; font-weight: 700;
+  color: var(--primary); letter-spacing: 3px;
+  margin-bottom: 6px;
+  text-align: left;
+}
+.result-era {
+  font-size: 12px; color: var(--text-light);
+  letter-spacing: 1px;
+  line-height: 1.6;
+  text-align: left;
+}
+.result-match-title {
+  font-size: 20px; font-weight: 700;
+  color: var(--secondary);
+  text-align: center;
+  margin-bottom: 12px;
+}
+.result-quote {
+  font-size: 12px; color: var(--secondary);
+  font-style: italic;
+  padding: 10px 14px;
+  background: rgba(133,225,204,0.1);
+  border-radius: 8px;
+  text-align: center;
+  margin: 12px 0 16px 0;
+  border-left: 3px solid var(--accent);
+}
+
+/* 相似度 */
+.result-similarity {
+  text-align: center;
+  margin: 16px 0;
+  padding: 12px;
+  background: rgba(179,225,101,0.12);
+  border-radius: 8px;
+}
+.result-similarity-text {
+  font-size: 15px; color: #3d2c2c;
+  font-weight: 600;
+}
+.result-similarity-num {
+  font-size: 36px; font-weight: 700;
+  color: var(--primary);
+  margin: 4px 0;
+}
+
+/* 选择说明 */
+.result-analysis {
+  font-size: 13px; color: #3d2c2c;
+  line-height: 2;
+  text-align: justify;
+  text-indent: 2em;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: rgba(133,225,204,0.08);
+  border-radius: 8px;
+}
+
+/* 信息区块 */
+.result-section {
+  margin-bottom: 14px;
+}
+.result-section-title {
+  font-size: 14px; font-weight: 600;
+  color: var(--primary); margin-bottom: 8px;
+  display: flex; align-items: center;
+  gap: 6px;
+}
+.result-section-title::before {
+  content: "";
+  width: 4px; height: 16px;
+  background: var(--primary);
+  border-radius: 2px;
+}
+.result-section-content {
+  font-size: 13px; color: var(--text-light);
+  line-height: 1.9;
+  text-align: justify;
+}
+.result-poems {
+  font-size: 12px; color: var(--text-light);
+  line-height: 2;
+  padding-left: 12px;
+  border-left: 2px solid var(--secondary);
+}
+.result-location {
+  font-size: 13px; color: var(--accent);
+  background: rgba(119,198,231,0.1);
+  padding: 10px 12px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.btn-restart {
+  display: block; width: 100%; padding: 12px 0;
+  background: transparent; color: var(--secondary);
+  font-size: 15px; letter-spacing: 3px;
+  border: 1.5px solid var(--secondary); border-radius: 8px;
+  cursor: pointer; transition: all 0.3s;
+  margin-top: 20px;
+}
+.btn-restart:active {
+  background: var(--secondary); color: #3d2c2c;
+}
+
+/* ---------- 淡入动画 ---------- */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeInUp 0.6s ease forwards; }
+
+/* ---------- 柳叶飘落装饰 ---------- */
+.leaf {
+  position: fixed; z-index: 0; pointer-events: none;
+  width: 20px; height: 8px;
+  background: var(--primary);
+  border-radius: 50%;
+  opacity: 0;
+  animation: leafFall linear infinite;
+}
+@keyframes leafFall {
+  0%   { transform: translateY(-30px) rotate(0deg) translateX(0); opacity: 0; }
+  5%   { opacity: 0.6; }
+  50%  { transform: translateY(50vh) rotate(180deg) translateX(30px); opacity: 0.5; }
+  90%  { opacity: 0.4; }
+  100% { transform: translateY(100vh) rotate(360deg) translateX(-20px); opacity: 0; }
+}
+
+/* 结果页铺满全屏 */
+#page-result {
+  justify-content: flex-start;
+  padding: 20px 16px;
+  overflow-y: hidden;
+}
+#page-result .border-frame {
+  width: 96%;
+  max-width: 420px;
+  height: auto;
+  min-height: 90vh;
+  border: 2px solid var(--primary);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  background: #fff;
+  padding: 24px 20px;
+  overflow-y: auto;
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== 首页 ==================== -->
+<div id="page-home" class="page active">
+  <div class="border-frame">
+    <!-- 山水装饰 -->
+    <div class="mountain-art" style="position:relative;">
+      <svg viewBox="0 0 400 100" xmlns="http://www.w3.org/2000/svg">
+        <!-- 远山 - 低饱和度浅蓝 -->
+        <path d="M0 80 Q50 30 100 60 Q150 20 200 50 Q250 10 300 45 Q350 25 400 55 L400 100 L0 100Z" fill="#a8d4e6" opacity="0.35"/>
+        <!-- 中山 - 低饱和度青色 -->
+        <path d="M0 85 Q60 50 120 65 Q180 40 240 60 Q300 35 360 55 Q380 48 400 58 L400 100 L0 100Z" fill="#b8e0d0" opacity="0.4"/>
+        <!-- 近山 - 低饱和度浅绿 -->
+        <path d="M0 90 Q80 50 150 70 Q220 40 300 65 Q360 45 400 70 L400 100 L0 100Z" fill="#c8e0a0" opacity="0.3"/>
+        <!-- 水面 -->
+        <rect x="0" y="92" width="400" height="8" fill="#b8e0d0" opacity="0.2"/>
+        <!-- 飞鸟 -->
+        <path d="M60 25 Q65 20 70 25" fill="none" stroke="#b8e0d0" stroke-width="0.8" opacity="0.6"/>
+        <path d="M75 22 Q80 17 85 22" fill="none" stroke="#b8e0d0" stroke-width="0.8" opacity="0.6"/>
+      </svg>
+      <!-- Logo图片 -->
+      <img src="logo.png" style="position:absolute; top:-15px; left:50%; transform:translateX(-50%); width:120px; height:120px; object-fit:contain; opacity:1; z-index:10;">
+    </div>
+
+    <div class="home-title">欢迎来到<br>沧浪群贤匹配测试！</div>
+    
+    <div class="home-intro">
+      <p>沧浪亭五百贤祠刻录了594方历代人物平雕石刻像，涵盖春秋至清末约2500年间的苏州籍或曾在苏州为官、生活者。</p>
+      <p>这里有心怀家国、勤政爱民的仕宦名臣，有寄情山水、诗文传世的风雅文人，有刚正不阿、坚守气节的忠义志士，也有博学笃行、潜心治学的儒林雅士。</p>
+      <p>如果穿越到那个时代，面对和他们一样的困境，你的选择会和谁相似呢？</p>
+    </div>
+    
+    <div class="divider"></div>
+    <div class="home-start-text">现在就开启一场穿越之旅</div>
+    <button class="btn-start" onclick="startQuiz()">开始答题</button>
+  </div>
+</div>
+
+<!-- ==================== 答题页 ==================== -->
+<div id="page-quiz" class="page">
+  <div class="border-frame">
+    <div class="quiz-header">
+      <span class="quiz-progress-text" id="progress-text">1 / 10</span>
+    </div>
+    <div class="quiz-progress-bar">
+      <div class="quiz-progress-fill" id="progress-fill" style="width:10%"></div>
+    </div>
+    <div class="quiz-question" id="question-text"></div>
+    <div class="quiz-options" id="options-container"></div>
+  </div>
+</div>
+
+<!-- ==================== 结果页 ==================== -->
+<div id="page-result" class="page">
+  <div class="border-frame">
+    <!-- 匹配标题 -->
+    <div class="result-match-title" id="result-match-title">你的匹配贤人是：</div>
+
+    <!-- 人物头部信息（画像+简介板块） -->
+    <div class="result-header">
+      <div class="result-image">
+        <img id="result-portrait" src="" alt="人物画像" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">
+      </div>
+      <div class="result-basic-info">
+        <div class="result-name" id="result-name"></div>
+        <div class="result-era" id="result-era"></div>
+      </div>
+    </div>
+
+    <!-- 相似度 -->
+    <div class="result-similarity">
+      <div class="result-similarity-text" id="result-match"></div>
+    </div>
+
+    <!-- 选择说明 -->
+    <div class="result-analysis" id="result-analysis"></div>
+
+    <!-- 生平简介 -->
+    <div class="result-section">
+      <div class="result-section-title">生平简介</div>
+      <div class="result-section-content" id="result-bio"></div>
+    </div>
+
+    <!-- 代表性诗作 -->
+    <div class="result-section">
+      <div class="result-section-title">代表性诗作</div>
+      <div class="result-poems" id="result-poems"></div>
+    </div>
+
+    <!-- 与苏州的渊源 -->
+    <div class="result-section">
+      <div class="result-section-title">与苏州的渊源</div>
+      <div class="result-section-content" id="result-suzhou"></div>
+    </div>
+
+    <!-- 石刻像方位 -->
+    <div class="result-section">
+      <div class="result-section-title">石刻像方位</div>
+      <div class="result-location" id="result-location"></div>
+    </div>
+
+    <button class="btn-restart" onclick="restart()">再测一次</button>
+  </div>
+</div>
+
+<!-- ==================== 飘落竹叶（装饰） ==================== -->
+<div id="leaves-container"></div>
+
+<script>
+/* ================================================================
+   ★★★ 配置区域 - 修改题目、分值、人物都在这里 ★★★
+   ================================================================ */
+
+/*
+  题目数组：每题4个选项，每个选项对应一位人物索引+10分
+  人物索引：0白居易 1韦应物 2范仲淹 3苏舜钦 4欧阳修 5苏轼 6范成大 7高启 8唐寅 9文徵明
+*/
+const questions = [
+  {
+    text: "你初到一座陌生城市，最想先做什么？",
+    options: [
+      { text: "寻访当地名士，饮酒论诗", scores: {0:10, 1:0, 2:0, 3:0, 4:0, 5:10, 6:0, 7:0, 8:0, 9:0} },
+      { text: "独自漫步山水间，感受天地", scores: {0:0, 1:10, 2:0, 3:0, 4:0, 5:0, 6:0, 7:10, 8:0, 9:0} },
+      { text: "考察民情，思考如何改善民生", scores: {0:0, 1:0, 2:10, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0} },
+      { text: "拜访古迹，研习前人墨迹", scores: {0:0, 1:0, 2:0, 3:0, 4:10, 5:0, 6:0, 7:0, 8:0, 9:10} }
+    ]
+  },
+  {
+    text: "面对仕途不顺，你更可能？",
+    options: [
+      { text: "寄情诗酒，随遇而安", scores: {0:10, 1:0, 2:0, 3:0, 4:0, 5:10, 6:0, 7:0, 8:0, 9:0} },
+      { text: "退隐山林，修身养性", scores: {0:0, 1:10, 2:0, 3:0, 4:0, 5:0, 6:0, 7:10, 8:0, 9:0} },
+      { text: "直言进谏，宁折不弯", scores: {0:0, 1:0, 2:10, 3:10, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0} },
+      { text: "纵情书画，以艺自适", scores: {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:10, 9:10} }
+    ]
+  },
+  {
+    text: "你最向往的生活状态是？",
+    options: [
+      { text: "官居高位，兼济天下", scores: {0:0, 1:0, 2:10, 3:0, 4:10, 5:0, 6:0, 7:0, 8:0, 9:0} },
+      { text: "隐居田园，诗酒自娱", scores: {0:10, 1:10, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0} },
+      { text: "游历四方，广交天下名士", scores: {0:0, 1:0, 2:0, 3:0, 4:0, 5:10, 6:10, 7:0, 8:0, 9:0} },
+      { text: "潜心创作，追求艺术极致", scores: {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:10, 9:10} }
+    ]
+  },
+  {
+    text: "朋友聚会，你通常会？",
+    options: [
+      { text: "即兴赋诗，才思敏捷", scores: {0:10, 1:0, 2:0, 3:0, 4:0, 5:10, 6:0, 7:0, 8:0, 9:0} },
+      { text: "安静聆听，偶尔点评", scores: {0:0, 1:10, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:10} },
+      { text: "高谈阔论，针砭时弊", scores: {0:0, 1:0, 2:0, 3:10, 4:10, 5:0, 6:0, 7:0, 8:0, 9:0} },
+      { text: "挥毫泼墨，以画会友", scores: {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:10, 9:10} }
+    ]
+  },
+  {
+    text: "你认为为官者最重要的是？",
+    options: [
+      { text: "心系百姓，务实兴利", scores: {0:0, 1:0, 2:10, 3:0, 4:0, 5:0, 6:10, 7:0, 8:0, 9:0} },
+      { text: "清廉自守，不慕名利", scores: {0:0, 1:10, 2:0, 3:10, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0} },
+      { text: "文采斐然，以文化人", scores: {0:10, 1:0, 2:0, 3:0, 4:10, 5:10, 6:0, 7:0, 8:0, 9:0} },
+      { text: "忠贞不渝，坚守气节", scores: {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:10, 8:0, 9:0} }
+    ]
+  },
+  {
+    text: "你闲暇时最喜欢？",
+    options: [
+      { text: "品茶赏花，吟诗作对", scores: {0:10, 1:0, 2:0, 3:0, 4:0, 5:0, 6:10, 7:0, 8:0, 9:10} },
+      { text: "泛舟湖上，抚琴吹箫", scores: {0:0, 1:10, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0} },
+      { text: "钻研书画，临摹古帖", scores: {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:10, 9:10} },
+      { text: "读书著文，记录所思所感", scores: {0:0, 1:0, 2:0, 3:0, 4:10, 5:10, 6:0, 7:0, 8:0, 9:0} }
+    ]
+  },
+  {
+    text: "面对自然美景，你更想？",
+    options: [
+      { text: "写一首诗记录此刻感受", scores: {0:10, 1:0, 2:0, 3:0, 4:0, 5:10, 6:10, 7:0, 8:0, 9:0} },
+      { text: "静坐观赏，感受天地之道", scores: {0:0, 1:10, 2:0, 3:0, 4:0, 5:0, 6:0, 7:10, 8:0, 9:0} },
+      { text: "画一幅画留住眼前风光", scores: {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:10, 9:10} },
+      { text: "与友共赏，把酒言欢", scores: {0:0, 1:0, 2:0, 3:10, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0} }
+    ]
+  },
+  {
+    text: "你最欣赏的品质是？",
+    options: [
+      { text: "忧国忧民的赤子之心", scores: {0:0, 1:0, 2:10, 3:0, 4:0, 5:10, 6:0, 7:0, 8:0, 9:0} },
+      { text: "淡泊名利的高洁品格", scores: {0:0, 1:10, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:10} },
+      { text: "才华横溢的艺术天赋", scores: {0:10, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:10, 9:10} },
+      { text: "刚正不阿的铮铮铁骨", scores: {0:0, 1:0, 2:0, 3:10, 4:10, 5:0, 6:0, 7:10, 8:0, 9:0} }
+    ]
+  },
+  {
+    text: "如果可以穿越，你想生活在？",
+    options: [
+      { text: "盛唐长安，诗酒风流", scores: {0:10, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0} },
+      { text: "北宋汴京，文人雅集", scores: {0:0, 1:0, 2:0, 3:0, 4:10, 5:10, 6:0, 7:0, 8:0, 9:0} },
+      { text: "南宋杭州，湖山如画", scores: {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:10, 7:0, 8:0, 9:0} },
+      { text: "明中苏州，吴门风雅", scores: {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:10, 8:10, 9:10} }
+    ]
+  },
+  {
+    text: "你最想留下什么？",
+    options: [
+      { text: "千古传诵的诗篇", scores: {0:10, 1:0, 2:0, 3:0, 4:0, 5:10, 6:10, 7:0, 8:0, 9:0} },
+      { text: "泽被后世的政绩", scores: {0:0, 1:0, 2:10, 3:0, 4:10, 5:0, 6:0, 7:0, 8:0, 9:0} },
+      { text: "流芳百世的书画", scores: {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:10, 9:10} },
+      { text: "不屈不挠的精神", scores: {0:0, 1:0, 2:0, 3:10, 4:0, 5:0, 6:0, 7:10, 8:0, 9:0} }
+    ]
+  }
+];
+
+// 选项标签
+const labels = ["1", "2", "3", "4"];
+
+/** 人物数据库 */
+const characters = [
+  {
+    name: "白居易",
+    era: "772-846  唐代・诗人・苏州刺史・翰林学士",
+    match: "你与白居易选择相似度达 75%！",
+    analysis: "你是妥妥的人间清醒 + 温柔观察者，自带超强共情力，看得到普通人的生活与情绪。不喜欢装腔作势，说话做事都直来直去，既敢吐槽不公，也能在柴米油盐里把日子过出滋味。心态稳得一批，就算遇到糟心事，也能靠自己的方式治愈，永远对生活保持热爱。",
+    quote: "「野火烧不尽，春风吹又生。」",
+    poems: "《长恨歌》「在天愿作比翼鸟，在地愿为连理枝」\n《琵琶行》「同是天涯沦落人，相逢何必曾相识」\n《忆江南》「日出江花红胜火，春来江水绿如蓝」",
+    location: "五百名贤祠 西壁 第三排 左起第二位",
+    bio: "白居易，字乐天，号香山居士，唐代伟大的现实主义诗人。他主张「文章合为时而著，歌诗合为事而作」，倡导新乐府运动，关心民间疾苦。其诗通俗易懂，「老妪能解」，流传极广。曾任苏州刺史，疏浚山塘河，修筑山塘街，造福一方。",
+    suzhou: "白居易曾任苏州刺史，在任期间疏浚山塘河，修筑山塘街（至今仍为苏州著名古街），造福一方百姓。他深爱苏州山水，离任后仍念念不忘，写下「忆江南」等名篇，称「吴酒一杯春竹叶，吴娃双舞醉芙蓉」。",
+    lifeQuote: "「同是天涯沦落人，相逢何必曾相识。」"
+  },
+  {
+    name: "韦应物",
+    era: "737-792  唐代・诗人・苏州刺史・滁州刺史",
+    match: "你与韦应物选择相似度达 75%！",
+    analysis: "你是那种越沉淀越有味道的人，年轻时也有过热血冲动，后来慢慢活成了低欲望、高自洽的状态。不爱凑热闹，更喜欢独处和亲近自然，讨厌复杂的人际关系，只想守着自己的小天地。内心通透得很，知道自己想要什么，外界的纷扰根本影响不到你。",
+    quote: "「春潮带雨晚来急，野渡无人舟自横。」",
+    poems: "《滁州西涧》「春潮带雨晚来急，野渡无人舟自横」\n《寄李儋元锡》「去年花里逢君别，今日花开又一年」\n《淮上喜会梁川故人》「何因北归去，秋雁向南飞」",
+    location: "五百名贤祠 西壁 第二排 左起第三位",
+    bio: "韦应物，京兆万年人，唐代诗人。早年出身贵族，曾为宫廷侍卫。后折节读书，历任多地刺史，世称「韦苏州」。为官简政爱民，晚年隐居，诗风冲淡闲远，自成一家。白居易评其诗「高雅闲淡，自成一家之体」。",
+    suzhou: "韦应物曾任苏州刺史，世称「韦苏州」。他在苏州为官清廉，关心民生，常游历山水，留下许多描写苏州风物的诗篇。其诗风冲淡闲远，对后世影响深远，苏州沧浪亭一带至今留有其遗迹。",
+    lifeQuote: "「去年花里逢君别，今日花开又一年。」"
+  },
+  {
+    name: "范仲淹",
+    era: "989-1052  北宋・政治家・文学家・参知政事・戍边名将",
+    match: "你与范仲淹选择相似度达 75%！",
+    analysis: "你天生就是格局拉满的实干家，目标感超强，眼里不只有自己的小日子，更有长远的方向和责任。认准的事就一定会做到底，遇到困难从不摆烂，反而越挫越勇。为人正直坦荡，不搞弯弯绕绕，身边的人都觉得你靠谱又有担当，妥妥的团队主心骨。",
+    quote: "「先天下之忧而忧，后天下之乐而乐。」",
+    poems: "《苏幕遮》「碧云天，黄叶地，秋色连波，波上寒烟翠」\n《渔家傲》「浊酒一杯家万里，燕然未勒归无计」\n《江上渔者》「江上往来人，但爱鲈鱼美」",
+    location: "五百名贤祠 西壁 第五排 左起第一位",
+    bio: "范仲淹，字希文，谥号文正。北宋杰出的政治家、思想家、军事家和文学家。他倡导「先忧后乐」的精神，主持庆历新政，推动改革。与苏州渊源极深，创办义庄、治理太湖水利，天平山范仲淹纪念馆是苏州重要文化地标。",
+    suzhou: "范仲淹与苏州渊源极深，曾在苏州创办「义庄」，设立义学，惠泽宗族与乡里。他治理太湖水利，修建范公堤，至今仍为苏州人所敬仰。天平山范仲淹纪念馆是苏州重要文化地标。",
+    lifeQuote: "「不以物喜，不以己悲。」"
+  },
+  {
+    name: "苏舜钦",
+    era: "1008-1048  北宋・诗人・沧浪亭缔造者・集贤院校理",
+    match: "你与苏舜钦选择相似度达 75%！",
+    analysis: "你是个灵魂自由的理想主义者，性子直爽率真，不爱被规则和人情束缚。就算生活给你添堵，也绝不会被磨平棱角，反而会自己找个地方「充电回血」。对喜欢的事格外执着，不管是搞创作还是搞爱好，都能沉浸其中，活成自己喜欢的样子。",
+    quote: "「一径抱幽山，居然城市间。」",
+    poems: "《淮中晚泊犊头》「春阴垂野草青青，时有幽花一树明」\n《初晴游沧浪亭》「一径抱幽山，居然城市间」\n《夏意》「别院深深夏席清，石榴开遍透帘明」",
+    location: "五百名贤祠 西壁 第五排 左起第四位",
+    bio: "苏舜钦，字子美，北宋诗人。他性格豪迈，敢于直言，因支持范仲淹新政而遭贬。退居苏州后购得吴越国旧池馆，傍水建亭，取「沧浪之水清兮」之意命名「沧浪亭」，并写下《沧浪亭记》。此亭后成为苏州最古老的园林。",
+    suzhou: "苏舜钦是沧浪亭的缔造者。庆历四年，他因「进奏院事件」被削职为民，退居苏州，购得吴越国孙承祐旧池馆，傍水建亭，取「沧浪之水清兮」之意，命名为「沧浪亭」，并写下《沧浪亭记》。此亭后成为苏州最古老的园林。",
+    lifeQuote: "「沧浪之水清兮，可以濯吾缨。」"
+  },
+  {
+    name: "欧阳修",
+    era: "1007-1072  北宋・政治家・文学家・文坛领袖・枢密副使",
+    match: "你与欧阳修选择相似度达 75%！",
+    analysis: "你是六边形选手 + 人间伯乐，能力强、情商高，既能搞定复杂的工作，也能和身边的人处好关系。心态特别乐观，就算遇到职场或生活的起起落落，也能看得开、放得下。还特别愿意帮别人、带新人，自带温和的气场，走到哪都很受欢迎。",
+    quote: "「醉翁之意不在酒，在乎山水之间也。」",
+    poems: "《生查子》「去年元夜时，花市灯如昼」\n《蝶恋花》「庭院深深深几许，杨柳堆烟，帘幕无重数」\n《丰乐亭游春》「红树青山日欲斜，长郊草色绿无涯」",
+    location: "五百名贤祠 西壁 第五排 左起第五位",
+    bio: "欧阳修，字永叔，号醉翁、六一居士，北宋文坛领袖。他领导古文运动，开创了一代文风。提携苏轼、曾巩等后进，桃李满天下。其散文《醉翁亭记》《秋声赋》等千古名篇，诗词亦卓然成家。",
+    suzhou: "欧阳修虽未在苏州长期任职，但与苏州文坛往来密切。他提携后进，苏州文人多受其影响。他对苏州园林文化极为推崇，其「醉翁之意不在酒」的闲适理念深刻影响了苏州园林的审美取向。",
+    lifeQuote: "「醉翁之意不在酒，在乎山水之间也。」"
+  },
+  {
+    name: "苏轼",
+    era: "1037-1101  北宋・文学家・书画家・礼部尚书・翰林学士",
+    match: "你与苏轼选择相似度达 75%！",
+    analysis: "你就是传说中的宝藏乐天派，多才多艺，对什么都充满好奇，走到哪都能解锁新技能。人生起起落落根本打不倒你，反而能在逆境里找乐子，苦日子也能过出花来。性格开朗又豁达，跟谁都能聊得来，自带感染力，是朋友里的开心果和定心丸。",
+    quote: "「但愿人长久，千里共婵娟。」",
+    poems: "《水调歌头》「明月几时有，把酒问青天」\n《念奴娇》「大江东去，浪淘尽，千古风流人物」\n《题西林壁》「不识庐山真面目，只缘身在此山中」",
+    location: "五百名贤祠 西壁 第六排 左起第二位",
+    bio: "苏轼，字子瞻，号东坡居士，北宋最伟大的文学家之一。诗、词、文、书、画皆臻化境，是中国文化史上罕见的全才。他一生仕途坎坷，屡遭贬谪，却始终乐观豁达。与苏州关系密切，多次到访苏州，游历虎丘、天平山等名胜。",
+    suzhou: "苏轼与苏州关系密切，曾多次到访苏州，游历虎丘、天平山等名胜。他深爱苏州山水，留下许多吟咏苏州的诗篇。其弟苏辙曾任苏州地方官，苏轼常来探望。苏州人对苏轼极为推崇，民间至今流传着许多关于他的故事。",
+    lifeQuote: "「一蓑烟雨任平生。」"
+  },
+  {
+    name: "范成大",
+    era: "1126-1193  南宋・诗人・参知政事・礼部尚书・石湖居士",
+    match: "你与范成大选择相似度达 75%！",
+    analysis: "你是接地气的生活记录者，不喜欢飘在天上，反而特别关注真实的生活和普通人的故事。做事踏实靠谱，一步一个脚印，不搞虚的，也不追那些虚无缥缈的流量和虚名。对世界充满好奇，喜欢到处走走看看，把自己的所见所闻变成独有的生活质感。",
+    quote: "「梅子金黄杏子肥，麦花雪白菜花稀。」",
+    poems: "《四时田园杂兴》「梅子金黄杏子肥，麦花雪白菜花稀」\n《横塘》「南浦春来绿一川，石桥朱塔两依然」\n《州桥》「州桥南北是天街，父老年年等驾回」",
+    location: "五百名贤祠 东壁 第三排 右起第二位",
+    bio: "范成大，字致能，号石湖居士，南宋名臣、诗人。土生土长的苏州人，故居在苏州石湖畔。出使金国不辱使命，官至参知政事。晚年退隐石湖，田园诗成就极高，与杨万里、陆游、尤袤并称「南宋四大家」。",
+    suzhou: "范成大是土生土长的苏州人，故居在苏州石湖畔。他在石湖畔建有别墅，留下大量描写苏州田园风光的诗篇。晚年退隐石湖，号「石湖居士」。苏州的石湖风景区至今仍保留着与他相关的古迹，范成大祠是苏州重要文化景点。",
+    lifeQuote: "「昼出耘田夜绩麻，村庄儿女各当家。」"
+  },
+  {
+    name: "高启",
+    era: "1336-1374  明初・诗人・吴中四杰之首・翰林院编修",
+    match: "你与高启选择相似度达 75%！",
+    analysis: "你是有风骨的理想主义者，自带清高的小脾气，不喜欢迎合别人，也不屑于搞职场那套人情世故。才华藏不住，但更在意自己的初心和原则，就算别人不理解，也不会为了合群而改变自己。活得很纯粹，只忠于自己的热爱和底线。",
+    quote: "「雪满山中高士卧，月明林下美人来。」",
+    poems: "《梅花九首》「雪满山中高士卧，月明林下美人来」\n《登金陵雨花台望大江》「大江来从万山中，山势尽与江流东」\n《秋望》「风雨萧萧望故关，野田秋兴独登攀」",
+    location: "五百名贤祠 东壁 第四排 右起第三位",
+    bio: "高启，字季迪，号槎轩，明初诗人，「吴中四杰」之首。他才情高逸，诗风清新雄健，被誉为明代最杰出的诗人之一。长年隐居苏州吴淞江畔，后因不愿依附权贵，最终惨遭杀害，年仅三十九岁。",
+    suzhou: "高启是「吴中四杰」之首，长年隐居苏州吴淞江畔。他才华横溢却不愿出仕，后因受明太祖朱元璋征召入京修《元史》，最终因文字狱被腰斩，年仅三十九岁。苏州人深为惋惜，将其列入沧浪亭五百名贤祠。",
+    lifeQuote: "「雪满山中高士卧，月明林下美人来。」"
+  },
+  {
+    name: "唐寅",
+    era: "1470-1524  明代・画家・文学家・吴中四才子之首・吴门四家之一",
+    match: "你与唐寅选择相似度达 75%！",
+    analysis: "你是自带故事感的潇洒玩家，才华藏不住，骨子里带着点不羁和叛逆。经历过人生的起落，早就看透了世俗的眼光，只想按自己的方式活。不爱被条条框框定义，开心最重要，在自己的小世界里活得热烈又肆意，是别人眼里又酷又神秘的存在。",
+    quote: "「别人笑我太疯癫，我笑他人看不穿。」",
+    poems: "《桃花庵歌》「桃花坞里桃花庵，桃花庵里桃花仙」\n《言志》「不炼金丹不坐禅，不为商贾不耕田」\n《画堂客散》「满街珠翠游春女，不道笙歌是暮愁」",
+    location: "五百名贤祠 东壁 第五排 右起第一位",
+    bio: "唐寅，字伯虎，号六如居士，明代著名画家、书法家、诗人，「吴门四家」之一，「吴中四才子」之首。生于苏州桃花坞，才华绝世却命运多舛，科举受挫后纵情诗酒书画。仕女画、山水画成就极高，是中国文化史上最具传奇色彩的人物之一。",
+    suzhou: "唐寅是苏州最具代表性的文化名人之一。他生于苏州，卒于苏州，一生大部分时间在苏州度过。桃花坞是其故居所在地，至今仍是苏州著名文化地标。他曾在沧浪亭附近活动，其放荡不羁、才情横溢的形象深入人心。",
+    lifeQuote: "「桃花坞里桃花庵，桃花庵里桃花仙。」"
+  },
+  {
+    name: "文徵明",
+    era: "1470-1559  明代・书画家・文学家・吴门四家之一・翰林待诏",
+    match: "你与文徵明选择相似度达 75%！",
+    analysis: "你是慢热但靠谱的长期主义者，可能不是一开始就闪闪发光的人，但胜在稳扎稳打，一步一个脚印，越努力越优秀。为人低调谦和，不爱出风头，做事专注又有耐心，认定的事就会坚持到底，是那种越相处越让人觉得安心的人。",
+    quote: "「剑池水冷龙归去，虎阜云深塔影孤。」",
+    poems: "《满江红》「拂拭残碑，敕飞字，依稀堪读」\n《石湖》「石湖烟水望中迷，湖上花深鸟乱啼」\n《游虎丘》「剑池水冷龙归去，虎阜云深塔影孤」",
+    location: "五百名贤祠 东壁 第五排 右起第四位",
+    bio: "文徵明，名壁，字徵明，明代著名书画家、文学家，「吴门四家」之一。他诗、文、书、画无一不精，与沈周共创「吴门画派」。长期生活在苏州，曾参与沧浪亭修缮保护。为人温润如玉，品德高洁，享年九十，是「吴中四才子」中最长寿的一位。",
+    suzhou: "文徵明是苏州文化的标志性人物。他长期生活在苏州，与苏州园林文化深度交融。他曾参与沧浪亭的修缮与保护，在苏州留下了大量书画作品和诗文。苏州博物馆藏有大量文徵明作品，拙政园中的文徵明手植紫藤至今仍年年花开。",
+    lifeQuote: "「石湖烟水望中迷，湖上花深鸟乱啼。」"
+  }
+];
+
+/* ================================================================
+   ★★★ 逻辑区域 ★★★
+   ================================================================ */
+let currentQ = 0;
+const scores = {};
+
+function startQuiz() {
+  currentQ = 0;
+  Object.keys(characters).forEach(k => scores[k] = 0);
+  showPage('page-quiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[currentQ];
+  document.getElementById('progress-text').textContent = (currentQ + 1) + ' / ' + questions.length;
+  document.getElementById('progress-fill').style.width = ((currentQ + 1) / questions.length * 100) + '%';
+  document.getElementById('question-text').textContent = q.text;
+
+  const container = document.getElementById('options-container');
+  container.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-option';
+    div.setAttribute('data-label', labels[i]);
+    div.textContent = opt.text;
+    div.addEventListener('click', () => selectOption(div, opt.scores));
+    container.appendChild(div);
+  });
+}
+
+function selectOption(el, optScores) {
+  // 视觉反馈
+  document.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+
+  // 累加分数
+  Object.keys(optScores).forEach(k => {
+    scores[k] = (scores[k] || 0) + optScores[k];
+  });
+
+  // 延迟跳转下一题
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ < questions.length) {
+      renderQuestion();
+    } else {
+      showResult();
+    }
+  }, 400);
+}
+
+function showResult() {
+  // 找最高分人物
+  let maxScore = -1, maxIdx = 0;
+  Object.keys(scores).forEach(k => {
+    if (scores[k] > maxScore) { maxScore = scores[k]; maxIdx = parseInt(k); }
+  });
+
+  const c = characters[maxIdx];
+  document.getElementById('result-name').textContent = c.name;
+  document.getElementById('result-era').textContent = c.era;
+  document.getElementById('result-portrait').src = 'images/' + maxIdx + '_portrait.png';
+  document.getElementById('result-match').textContent = c.match;
+  document.getElementById('result-analysis').textContent = c.analysis;
+  document.getElementById('result-poems').innerHTML = c.poems.replace(/\n/g, '<br>');
+  document.getElementById('result-location').textContent = c.location;
+  document.getElementById('result-bio').textContent = c.bio;
+  document.getElementById('result-suzhou').textContent = c.suzhou;
+
+  showPage('page-result');
+}
+
+function restart() {
+  showPage('page-home');
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ---------- 飘落竹叶 ---------- */
+(function createLeaves() {
+  const container = document.getElementById('leaves-container');
+  const colors = ['#b3e165', '#85e1cc', '#77c6e7'];
+  for (let i = 0; i < 15; i++) {
+    const leaf = document.createElement('div');
+    leaf.className = 'leaf';
+    leaf.style.left = Math.random() * 100 + 'vw';
+    leaf.style.animationDuration = (8 + Math.random() * 12) + 's';
+    leaf.style.animationDelay = (Math.random() * 10) + 's';
+    leaf.style.background = colors[i % 3];
+    leaf.style.width = (16 + Math.random() * 8) + 'px';
+    leaf.style.height = (6 + Math.random() * 4) + 'px';
+    container.appendChild(leaf);
+  }
+})();
+</script>
+</body>
+</html>
